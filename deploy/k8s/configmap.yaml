@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docagent-config
+  labels: {app: docagent}
+data:
+  DOCAGENT_BACKEND: "azure"
+  AZURE_OPENAI_ENDPOINT: "https://your-resource.openai.azure.com"
+  AZURE_OPENAI_VISION_DEPLOYMENT: "gpt-4o"
+  AZURE_OPENAI_API_VERSION: "2024-10-21"
+  DOCAGENT_FIELD_FLOOR: "0.80"
+  DOCAGENT_CRITICAL_FLOOR: "0.92"
+  DOCAGENT_MANUAL_APPROVAL_AMOUNT: "500000"
+  DOCAGENT_DRIFT_PSI_ALERT: "0.2"
+  DOCAGENT_AUTO_POST_DROP_ALERT: "0.10"

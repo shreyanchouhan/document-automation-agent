@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: docagent-batch-ingest
+  labels: {app: docagent, component: ingest}
+spec:
+  schedule: "0 2 * * *"
+  timeZone: "Asia/Kolkata"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 10001, fsGroup: 10001}
+          containers:
+            - name: ingest
+              image: ghcr.io/shreyanchouhan/document-automation-agent:latest
+              # A critical drift alert fails the job, so the batch surfaces in
+              # job alerting instead of quietly filling the review queue.
+              args: ["ingest", "--batch-id", "$(BATCH_ID)", "--output-path", "/data/lakehouse",
+                     "--format", "parquet", "--fail-on-critical-drift"]
+              env:
+                - {name: BATCH_ID, value: "batch-05"}
+              envFrom:
+                - configMapRef: {name: docagent-config}
+                - secretRef: {name: docagent-secrets}
+              resources:
+                requests: {cpu: "500m", memory: "1Gi"}
+                limits: {cpu: "2", memory: "2Gi"}
+              volumeMounts:
+                - {name: state, mountPath: /data}
+          volumes:
+            - name: state
+              persistentVolumeClaim: {claimName: docagent-state}

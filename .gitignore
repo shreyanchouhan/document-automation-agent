@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+data/corpus/
+data/docagent.db
+data/baseline.json
+data/lakehouse/
+evals/results.json
+.pytest_cache/
+.DS_Store
+.streamlit/secrets.toml
+deploy/k8s/secret.yaml

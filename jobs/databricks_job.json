@@ -1,0 +1,48 @@
+{
+  "name": "docagent-invoice-ingest",
+  "format": "MULTI_TASK",
+  "email_notifications": {
+    "on_failure": ["ap-platform@example.com"]
+  },
+  "schedule": {
+    "quartz_cron_expression": "0 0 2 * * ?",
+    "timezone_id": "Asia/Kolkata",
+    "pause_status": "UNPAUSED"
+  },
+  "max_concurrent_runs": 1,
+  "job_clusters": [
+    {
+      "job_cluster_key": "ingest",
+      "new_cluster": {
+        "spark_version": "15.4.x-scala2.12",
+        "node_type_id": "Standard_DS3_v2",
+        "num_workers": 2,
+        "spark_env_vars": {
+          "DOCAGENT_BACKEND": "azure",
+          "AZURE_OPENAI_ENDPOINT": "{{secrets/docagent/azure_openai_endpoint}}",
+          "AZURE_OPENAI_API_KEY": "{{secrets/docagent/azure_openai_api_key}}",
+          "AZURE_OPENAI_VISION_DEPLOYMENT": "gpt-4o"
+        }
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "ingest_batch",
+      "job_cluster_key": "ingest",
+      "spark_python_task": {
+        "python_file": "dbfs:/Workspace/docagent/jobs/databricks_ingest.py",
+        "parameters": [
+          "--batch-id", "{{job.parameters.batch_id}}",
+          "--output-path", "abfss://lakehouse@example.dfs.core.windows.net/docagent",
+          "--format", "delta",
+          "--fail-on-critical-drift"
+        ]
+      },
+      "libraries": [{"pypi": {"package": "openai>=1.40.0"}}],
+      "timeout_seconds": 3600,
+      "max_retries": 1
+    }
+  ],
+  "parameters": [{"name": "batch_id", "default": "batch-01"}]
+}
